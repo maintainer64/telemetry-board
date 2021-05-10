@@ -1,22 +1,37 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
-#include <SlowSoftI2CMaster.h>
-#include <DS1721Temp.h>
-
+#include <AxisElementary.h>
+#include <GpsElementary.h>
+const uint8_t DS1721TempI2C7bitAddr = 0x48;
+const uint8_t LIS3DHI2C7bitAddr = 0x18;
+const int led_port = PC7;
+const int photo_resistor = PA0;
 SoftwareSerial serial(PA10, PA9);
-SlowSoftI2CMaster i2c1(14, 15, true);
-DS1721Temp sensor(i2c1, 0x90, serial);
+SoftwareSerial serial_gps_module(PA3, PA2);
+AxisElementary axis(I2C_MODE, LIS3DHI2C7bitAddr);
+GpsElementary gps;
+
 void setup() {
     serial.begin(9600);
-    auto info = i2c1.i2c_init() ? "Success init I2C" : "Not work module I2C";
-    serial.println(info);
-    info = sensor.init() ? "Success init Temperature" : "Not work module Temperature";
-    serial.println(info);
+    serial_gps_module.begin(9600);
+    delay(1000);
+    serial.println(axis.begin());
+    serial.println(gps.begin(serial_gps_module));
+    pinMode(led_port, OUTPUT);
+    pinMode(photo_resistor, INPUT);
+    digitalWrite(led_port, LOW);
 }
 
 void loop() {
-    int temperature = sensor.readTemperature();
-    serial.print("Temperature:");
-    serial.println(temperature);
     delay(1000);
+    auto axis_d = axis.read();
+    auto axis_p = toPrintAxisElementaryMm(axis_d);
+    serial.println(axis_p);
+
+    auto gps_d = gps.read();
+    auto gps_p = toPrintGpsElementaryLocation(gps_d);
+    serial.println(gps_p);
+
+    int val = analogRead(photo_resistor);
+    serial.println(val);
 }

@@ -11,7 +11,7 @@ void DS1721Temp::debug(const String &string){
 
 DS1721Temp::DS1721Temp(SlowSoftI2CMaster &i2c_master_, uint8_t address_, SoftwareSerial &serial_){
     i2c_master = i2c_master_;
-    address = address_;
+    address = address_ << 1;
     is_init = false;
     _serial = serial_;
 }
@@ -25,7 +25,7 @@ bool DS1721Temp::init(){
         debug("Init not start by init_byte");
         return false;
     }
-    // i2c_master.i2c_stop();
+    i2c_master.i2c_stop();
     is_init = true;
     return true;
 }
@@ -56,6 +56,6 @@ int DS1721Temp::readTemperature(){
     uint8_t msb = i2c_master.i2c_read(false);
     uint8_t lsb = i2c_master.i2c_read(true);
     int ans = (int) msb * 256 + (int) lsb;
-    // i2c_master.i2c_stop();
+    i2c_master.i2c_stop();
     return ans;
 }
